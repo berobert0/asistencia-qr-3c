@@ -1,4 +1,4 @@
-const API = "https://script.google.com/macros/s/AKfycbzvykMTRDuoV3q-E4ArxOjrVBLRWgaYK1yDo94NfWAf9waBWbM0vaFML1r3JzpATYIb/exec";
+const API = "https://script.google.com/macros/s/AKfycbwn8J_sZ0MRDzKrDefOKUCJ9sTzOJ0h2MGDYAzu-DpjN4WXz0bSlA7Jm-vSjR0bJm7L/exec";
 
 let bloqueado = false;
 
