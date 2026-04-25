@@ -1,4 +1,4 @@
-const API="https://script.google.com/macros/s/AKfycbzhEGXTtJbWpCvrUgF2beJ4dtlDoFw0WetOVeHF3S7nuPLoV6AGiqMuezL17rZCtsMc/exec";
+const API="https://script.google.com/macros/s/AKfycbwJjWDbdpgy6o1ds2uqaDikC-JLSwhJnfMaVoDMobkXSRuiosfbqEk5nXB29uRZt1wb/exec";
 
 let chart;
 
