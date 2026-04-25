@@ -21,6 +21,27 @@ fetch(API+
    .style.display="block";
 
    cargar();
+  function resumenMensual(){
+
+fetch(API+"?tipo=panel")
+.then(r=>r.json())
+.then(data=>{
+
+ let a=0,t=0,f=0;
+
+ data.forEach(x=>{
+
+  if(x.estado=="ASISTENCIA") a++;
+  if(x.estado=="TARDANZA") t++;
+  if(x.estado=="FALTA") f++;
+
+ });
+
+ console.log("Mensual",a,t,f);
+
+});
+
+}
 
  }else{
    alert("Credenciales incorrectas");
