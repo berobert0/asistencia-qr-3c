@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
-<title>Dashboard</title>
+<title>Panel</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -15,9 +15,27 @@
 
 <body>
 
-<div class="header">
-<h2>Dashboard Escolar</h2>
+<div id="login">
+
+<h2>Ingreso Seguro</h2>
+
+<input id="user" placeholder="Usuario">
+
+<input id="pass" type="password" placeholder="Clave">
+
+<button onclick="login()">Ingresar</button>
+
 </div>
+
+<div id="panel" style="display:none;">
+
+<div class="header">
+Dashboard Escolar
+</div>
+
+<button onclick="exportar()">
+Exportar Excel
+</button>
 
 <div class="dashboard">
 
@@ -53,6 +71,8 @@
 <tbody id="tabla"></tbody>
 
 </table>
+
+</div>
 
 <script src="panel.js"></script>
 
