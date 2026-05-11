@@ -1,41 +1,52 @@
-// ======================================
-// API GOOGLE APPS SCRIPT
-// ======================================
-
-const API =
-"https://script.google.com/macros/s/AKfycbz5RfBkeCIPa5zcayzbtpe3YYuzAmoCAzep-7q1VH_MO4AMt1OUz3aQ5sjeKkDaq_uf/exec";
-
-
-// ======================================
-// VARIABLES
-// ======================================
+const API="https://script.google.com/macros/s/AKfycbz5RfBkeCIPa5zcayzbtpe3YYuzAmoCAzep-7q1VH_MO4AMt1OUz3aQ5sjeKkDaq_uf/exec";
 
 let bloqueado = false;
-let sonido;
-
 
 // ======================================
-// ACTIVAR SONIDO EN MOVIL
+// SONIDOS
 // ======================================
 
-document.body.addEventListener("click", () => {
+let sonidoAsistencia;
+let sonidoTardanza;
+let sonidoFalta;
+let sonidoDuplicado;
 
-  if (!sonido) {
+// ======================================
+// ACTIVAR SONIDOS
+// ======================================
 
-    sonido = new Audio(
-      "https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
+document.body.addEventListener("click", ()=>{
+
+  if(!sonidoAsistencia){
+
+    sonidoAsistencia = new Audio(
+      "https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"
     );
+
+    sonidoTardanza = new Audio(
+      "https://actions.google.com/sounds/v1/alarms/beep_short.ogg"
+    );
+
+    sonidoFalta = new Audio(
+      "https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg"
+    );
+
+    sonidoDuplicado = new Audio(
+      "https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg"
+    );
+
+    console.log("🔊 Sonidos cargados");
 
   }
 
-});
+},{ once:true });
 
 
 // ======================================
 // VALIDAR HORARIO
 // ======================================
 
-function obtenerEstadoPorHora() {
+function obtenerEstadoPorHora(){
 
   let ahora = new Date();
 
@@ -44,29 +55,32 @@ function obtenerEstadoPorHora() {
 
   let horaActual = horas * 60 + minutos;
 
-  // HORARIOS
-  const inicio     = 7 * 60 + 40; // 7:40
-  const asistencia = 7 * 60 + 59; // 7:59
-  const tardanza   = 8 * 60 + 30; // 8:30
-  const salida     = 12 * 60 + 40; // 12:40
+  const inicio     = 7 * 60 + 40;
+  const asistencia = 7 * 60 + 59;
+  const tardanza   = 8 * 60 + 30;
+  const salida     = 12 * 60 + 40;
 
-  if (horaActual < inicio) {
+  if(horaActual < inicio){
 
     return "FUERA DE HORARIO";
 
-  } else if (horaActual <= asistencia) {
+  }
+  else if(horaActual <= asistencia){
 
     return "ASISTENCIA";
 
-  } else if (horaActual <= tardanza) {
+  }
+  else if(horaActual <= tardanza){
 
     return "TARDANZA";
 
-  } else if (horaActual <= salida) {
+  }
+  else if(horaActual <= salida){
 
     return "FALTA";
 
-  } else {
+  }
+  else{
 
     return "FUERA DE HORARIO";
 
@@ -76,209 +90,234 @@ function obtenerEstadoPorHora() {
 
 
 // ======================================
-// QR SCANNER
+// VOZ
+// ======================================
+
+function hablar(texto){
+
+  if(!window.speechSynthesis) return;
+
+  let voz = new SpeechSynthesisUtterance(texto);
+
+  voz.lang = "es-ES";
+  voz.rate = 1;
+
+  speechSynthesis.speak(voz);
+
+}
+
+
+// ======================================
+// ESCANER QR
 // ======================================
 
 const qr = new Html5Qrcode("reader");
 
 qr.start(
 
-  { facingMode: "environment" },
+  { facingMode:"environment" },
 
   {
-    fps: 10,
-    qrbox: 220
+    fps:10,
+    qrbox:220
   },
 
-  (texto) => {
+(texto)=>{
 
-    // EVITAR MULTIPLE LECTURA
-    if (bloqueado) return;
+  if(bloqueado) return;
 
-    bloqueado = true;
+  bloqueado = true;
+
+  // 📳 vibración
+
+  if(navigator.vibrate){
+
+    navigator.vibrate(200);
+
+  }
+
+  // ======================================
+  // CONSULTA API
+  // ======================================
+
+  fetch(API + "?codigo=" + encodeURIComponent(texto))
+
+  .then(r=>{
+
+    if(!r.ok){
+
+      throw new Error("Error servidor");
+
+    }
+
+    return r.json();
+
+  })
+
+  .then(d=>{
 
     // ======================================
-    // SONIDO
+    // HTML
     // ======================================
 
-    if (sonido) {
+    const nombreHTML  = document.getElementById("nombre");
+    const mensajeHTML = document.getElementById("mensaje");
+    const estadoHTML  = document.getElementById("estado");
+    const fotoHTML    = document.getElementById("foto");
 
-      sonido.currentTime = 0;
+    nombreHTML.innerHTML =
+    d.nombre || "Sin nombre";
 
-      sonido.play().catch(() => {});
+    mensajeHTML.innerHTML =
+    d.mensaje || "";
+
+    // ======================================
+    // ESTADO
+    // ======================================
+
+    let estadoHora =
+    obtenerEstadoPorHora();
+
+    let estadoFinal =
+    d.estado === "DUPLICADO"
+    ? "DUPLICADO"
+    : estadoHora;
+
+    // ======================================
+    // SONIDOS + COLORES
+    // ======================================
+
+    switch(estadoFinal){
+
+      case "ASISTENCIA":
+
+        estadoHTML.innerHTML =
+        "🟢 ASISTENCIA";
+
+        estadoHTML.style.color =
+        "#22c55e";
+
+        document.body.style.background =
+        "#052e16";
+
+        sonidoAsistencia?.play();
+
+        hablar("Bienvenido " + d.nombre);
+
+      break;
+
+
+      case "TARDANZA":
+
+        estadoHTML.innerHTML =
+        "🟡 TARDANZA";
+
+        estadoHTML.style.color =
+        "#facc15";
+
+        document.body.style.background =
+        "#3f2f00";
+
+        sonidoTardanza?.play();
+
+        hablar("Tardanza");
+
+      break;
+
+
+      case "FALTA":
+
+        estadoHTML.innerHTML =
+        "🔴 FALTA";
+
+        estadoHTML.style.color =
+        "#ef4444";
+
+        document.body.style.background =
+        "#450a0a";
+
+        sonidoFalta?.play();
+
+        hablar("Falta");
+
+      break;
+
+
+      case "DUPLICADO":
+
+        estadoHTML.innerHTML =
+        "⚠️ DUPLICADO";
+
+        estadoHTML.style.color =
+        "#f97316";
+
+        document.body.style.background =
+        "#431407";
+
+        sonidoDuplicado?.play();
+
+        hablar("Registro duplicado");
+
+      break;
+
+
+      default:
+
+        estadoHTML.innerHTML =
+        "⏰ FUERA DE HORARIO";
+
+        estadoHTML.style.color =
+        "#6b7280";
+
+        document.body.style.background =
+        "#111827";
 
     }
 
     // ======================================
-    // VIBRACION MOVIL
+    // FOTO
     // ======================================
 
-    if (navigator.vibrate) {
+    if(d.foto && d.foto.startsWith("http")){
 
-      navigator.vibrate(200);
+      fotoHTML.src = d.foto;
+
+      fotoHTML.style.display =
+      "block";
+
+    }else{
+
+      fotoHTML.style.display =
+      "none";
 
     }
 
     // ======================================
-    // CONSULTA API
+    // RESETEAR COLOR
     // ======================================
 
-    fetch(
-      API + "?codigo=" + encodeURIComponent(texto)
-    )
+    setTimeout(()=>{
 
-    .then((r) => {
-
-      if (!r.ok) {
-
-        throw new Error("Error servidor");
-
-      }
-
-      return r.json();
-
-    })
-
-    .then((d) => {
-
-      // ======================================
-      // ELEMENTOS HTML
-      // ======================================
-
-      const nombre  = document.getElementById("nombre");
-      const mensaje = document.getElementById("mensaje");
-      const estado  = document.getElementById("estado");
-      const foto    = document.getElementById("foto");
-
-      // ======================================
-      // DATOS
-      // ======================================
-
-      nombre.innerHTML =
-      d.nombre || "SIN NOMBRE";
-
-      mensaje.innerHTML =
-      d.mensaje || "";
-
-      // ======================================
-      // ESTADO POR HORA
-      // ======================================
-
-      let estadoHora = obtenerEstadoPorHora();
-
-      // SI API DICE DUPLICADO
-      // RESPETAR ESE ESTADO
-
-      let estadoFinal =
-      d.estado === "DUPLICADO"
-      ? "DUPLICADO"
-      : estadoHora;
-
-      // ======================================
-      // COLORES Y MENSAJES
-      // ======================================
-
-      switch (estadoFinal) {
-
-        case "ASISTENCIA":
-
-          estado.innerHTML =
-          "🟢 ASISTENCIA";
-
-          estado.style.color =
-          "#22c55e";
-
-        break;
-
-
-        case "TARDANZA":
-
-          estado.innerHTML =
-          "🟡 TARDANZA";
-
-          estado.style.color =
-          "#facc15";
-
-        break;
-
-
-        case "FALTA":
-
-          estado.innerHTML =
-          "🔴 FALTA";
-
-          estado.style.color =
-          "#ef4444";
-
-        break;
-
-
-        case "DUPLICADO":
-
-          estado.innerHTML =
-          "⚠️ DUPLICADO";
-
-          estado.style.color =
-          "#f97316";
-
-        break;
-
-
-        default:
-
-          estado.innerHTML =
-          "⏰ FUERA DE HORARIO";
-
-          estado.style.color =
-          "#6b7280";
-
-      }
-
-      // ======================================
-      // FOTO
-      // ======================================
-
-      if (
-        d.foto &&
-        d.foto.startsWith("http")
-      ) {
-
-        foto.src = d.foto;
-
-        foto.style.display = "block";
-
-      } else {
-
-        foto.style.display = "none";
-
-      }
-
-      // ======================================
-      // DESBLOQUEAR
-      // ======================================
-
-      setTimeout(() => {
-
-        bloqueado = false;
-
-      }, 3000);
-
-    })
-
-    .catch((err) => {
-
-      console.error(err);
-
-      document.getElementById("mensaje").innerHTML =
-      "❌ Error de conexión";
-
-      document.getElementById("estado").innerHTML =
-      "";
+      document.body.style.background =
+      "#111827";
 
       bloqueado = false;
 
-    });
+    },3000);
 
-  }
+  })
+
+  .catch(err=>{
+
+    console.error(err);
+
+    document.getElementById("mensaje").innerHTML =
+    "❌ Error de conexión";
+
+    bloqueado = false;
+
+  });
+
+}
 
 );
