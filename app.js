@@ -1,6 +1,8 @@
-const API="https://script.google.com/macros/s/AKfycbz5RfBkeCIPa5zcayzbtpe3YYuzAmoCAzep-7q1VH_MO4AMt1OUz3aQ5sjeKkDaq_uf/exec";
+const API =
+"https://script.google.com/macros/s/AKfycbz5RfBkeCIPa5zcayzbtpe3YYuzAmoCAzep-7q1VH_MO4AMt1OUz3aQ5sjeKkDaq_uf/exec";
 
 let bloqueado = false;
+
 
 // ======================================
 // SONIDOS
@@ -10,6 +12,7 @@ let sonidoAsistencia;
 let sonidoTardanza;
 let sonidoFalta;
 let sonidoDuplicado;
+
 
 // ======================================
 // ACTIVAR SONIDOS
@@ -34,8 +37,6 @@ document.body.addEventListener("click", ()=>{
     sonidoDuplicado = new Audio(
       "https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg"
     );
-
-    console.log("🔊 Sonidos cargados");
 
   }
 
@@ -97,10 +98,10 @@ function hablar(texto){
 
   if(!window.speechSynthesis) return;
 
-  let voz = new SpeechSynthesisUtterance(texto);
+  let voz =
+  new SpeechSynthesisUtterance(texto);
 
   voz.lang = "es-ES";
-  voz.rate = 1;
 
   speechSynthesis.speak(voz);
 
@@ -111,7 +112,8 @@ function hablar(texto){
 // ESCANER QR
 // ======================================
 
-const qr = new Html5Qrcode("reader");
+const qr =
+new Html5Qrcode("reader");
 
 qr.start(
 
@@ -128,7 +130,7 @@ qr.start(
 
   bloqueado = true;
 
-  // 📳 vibración
+  // VIBRACION
 
   if(navigator.vibrate){
 
@@ -136,17 +138,21 @@ qr.start(
 
   }
 
-  // ======================================
-  // CONSULTA API
-  // ======================================
+  // API
 
-  fetch(API + "?codigo=" + encodeURIComponent(texto))
+  fetch(
+    API +
+    "?codigo=" +
+    encodeURIComponent(texto)
+  )
 
   .then(r=>{
 
     if(!r.ok){
 
-      throw new Error("Error servidor");
+      throw new Error(
+        "Error servidor"
+      );
 
     }
 
@@ -156,24 +162,27 @@ qr.start(
 
   .then(d=>{
 
-    // ======================================
-    // HTML
-    // ======================================
+    const nombreHTML =
+    document.getElementById("nombre");
 
-    const nombreHTML  = document.getElementById("nombre");
-    const mensajeHTML = document.getElementById("mensaje");
-    const estadoHTML  = document.getElementById("estado");
-    const fotoHTML    = document.getElementById("foto");
+    const mensajeHTML =
+    document.getElementById("mensaje");
+
+    const estadoHTML =
+    document.getElementById("estado");
+
+    const fotoHTML =
+    document.getElementById("foto");
+
+    // DATOS
 
     nombreHTML.innerHTML =
-    d.nombre || "Sin nombre";
+    d.nombre || "SIN NOMBRE";
 
     mensajeHTML.innerHTML =
     d.mensaje || "";
 
-    // ======================================
     // ESTADO
-    // ======================================
 
     let estadoHora =
     obtenerEstadoPorHora();
@@ -183,9 +192,7 @@ qr.start(
     ? "DUPLICADO"
     : estadoHora;
 
-    // ======================================
-    // SONIDOS + COLORES
-    // ======================================
+    // SWITCH
 
     switch(estadoFinal){
 
@@ -202,7 +209,10 @@ qr.start(
 
         sonidoAsistencia?.play();
 
-        hablar("Bienvenido " + d.nombre);
+        hablar(
+          "Bienvenido " +
+          d.nombre
+        );
 
       break;
 
@@ -220,8 +230,6 @@ qr.start(
 
         sonidoTardanza?.play();
 
-        hablar("Tardanza");
-
       break;
 
 
@@ -237,8 +245,6 @@ qr.start(
         "#450a0a";
 
         sonidoFalta?.play();
-
-        hablar("Falta");
 
       break;
 
@@ -256,8 +262,6 @@ qr.start(
 
         sonidoDuplicado?.play();
 
-        hablar("Registro duplicado");
-
       break;
 
 
@@ -267,20 +271,40 @@ qr.start(
         "⏰ FUERA DE HORARIO";
 
         estadoHTML.style.color =
-        "#6b7280";
-
-        document.body.style.background =
-        "#111827";
+        "#9ca3af";
 
     }
 
-    // ======================================
     // FOTO
-    // ======================================
 
-    if(d.foto && d.foto.startsWith("http")){
+    if(d.foto){
 
-      fotoHTML.src = d.foto;
+      let urlFoto =
+      d.foto;
+
+      if(
+        urlFoto.includes(
+          "drive.google.com"
+        )
+      ){
+
+        let match =
+        urlFoto.match(
+          /\/d\/(.*?)\//
+        );
+
+        if(match && match[1]){
+
+          urlFoto =
+          "https://drive.google.com/uc?export=view&id=" +
+          match[1];
+
+        }
+
+      }
+
+      fotoHTML.src =
+      urlFoto;
 
       fotoHTML.style.display =
       "block";
@@ -292,9 +316,7 @@ qr.start(
 
     }
 
-    // ======================================
-    // RESETEAR COLOR
-    // ======================================
+    // RESET
 
     setTimeout(()=>{
 
@@ -309,10 +331,12 @@ qr.start(
 
   .catch(err=>{
 
-    console.error(err);
+    console.log(err);
 
-    document.getElementById("mensaje").innerHTML =
-    "❌ Error de conexión";
+    document.getElementById(
+      "mensaje"
+    ).innerHTML =
+    "❌ ERROR";
 
     bloqueado = false;
 
