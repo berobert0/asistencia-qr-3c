@@ -6,70 +6,36 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Scanner QR</title>
+<title>CONTROL QR</title>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 
-<style>
-
-body{
-  background:#111827;
-  color:white;
-  font-family:Arial;
-  text-align:center;
-  margin:0;
-  padding:20px;
-}
-
-#reader{
-  width:320px;
-  margin:auto;
-}
-
-#foto{
-  width:140px;
-  height:140px;
-  border-radius:50%;
-  object-fit:cover;
-  margin-top:15px;
-  display:none;
-  border:4px solid white;
-}
-
-#nombre{
-  font-size:26px;
-  font-weight:bold;
-  margin-top:15px;
-}
-
-#estado{
-  font-size:30px;
-  font-weight:bold;
-  margin-top:10px;
-}
-
-#mensaje{
-  font-size:20px;
-  margin-top:10px;
-}
-
-</style>
+<link rel="stylesheet" href="style.css">
 
 </head>
 
 <body>
 
-<h1>📷 CONTROL QR</h1>
+<div class="contenedor">
 
-<div id="reader"></div>
+  <h1>📷 CONTROL DE ASISTENCIA</h1>
 
-<img id="foto">
+  <!-- QR -->
+  <div id="reader"></div>
 
-<div id="nombre"></div>
+  <!-- FOTO -->
+  <img id="foto">
 
-<div id="estado"></div>
+  <!-- NOMBRE -->
+  <div id="nombre">ESCANEAR QR</div>
 
-<div id="mensaje"></div>
+  <!-- ESTADO -->
+  <div id="estado"></div>
+
+  <!-- MENSAJE -->
+  <div id="mensaje"></div>
+
+</div>
 
 <script src="app.js"></script>
 
