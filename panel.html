@@ -1,78 +1,50 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
+
 <head>
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
 
-<title>Panel</title>
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<link rel="stylesheet" href="style.css">
+<title>PANEL</title>
 
 </head>
 
-<body>
+<body
+style="
+background:#111;
+color:white;
+text-align:center;
+font-family:Arial;
+">
 
-<div id="login">
+<h2>PANEL EN VIVO</h2>
 
-<h2>Ingreso Seguro</h2>
-
-<input id="user" placeholder="Usuario">
-
-<input id="pass" type="password" placeholder="Clave">
-
-<button onclick="login()">Ingresar</button>
-
-</div>
-
-<div id="panel" style="display:none;">
-
-<div class="header">
-Dashboard Escolar
-</div>
-
-<button onclick="exportar()">
-Exportar Excel
-</button>
-
-<div class="dashboard">
-
-<div class="card verde">
-<h3>Asistencia</h3>
-<h1 id="asis">0</h1>
-</div>
-
-<div class="card amarillo">
-<h3>Tardanza</h3>
-<h1 id="tard">0</h1>
-</div>
-
-<div class="card rojo">
-<h3>Falta</h3>
-<h1 id="falt">0</h1>
-</div>
-
-</div>
-
-<canvas id="grafico"></canvas>
-
-<table>
+<table
+border="1"
+width="100%">
 
 <thead>
+
 <tr>
-<th>Alumno</th>
-<th>Hora</th>
-<th>Estado</th>
+
+<th>CODIGO</th>
+<th>NOMBRE</th>
+<th>GRADO</th>
+<th>SECCION</th>
+<th>FECHA</th>
+<th>HORA</th>
+<th>ESTADO</th>
+
 </tr>
+
 </thead>
 
 <tbody id="tabla"></tbody>
 
 </table>
-
-</div>
 
 <script src="panel.js"></script>
 
