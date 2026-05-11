@@ -1,132 +1,114 @@
 const API =
-"https://script.google.com/macros/s/AKfycbwb_k8JvvmzldaPk-D-8uHPg7craueCyK-pcM61Vy2s46slSvA3LzWr8yh-vldJK0gq/exec";
+"https://script.google.com/macros/s/AKfycbz5RfBkeCIPa5zcayzbtpe3YYuzAmoCAzep-7q1VH_MO4AMt1OUz3aQ5sjeKkDaq_uf/exec";
 
-let bloqueado = false;
+let bloqueado=false;
+let sonido;
+
+document.body.addEventListener("click",()=>{
+
+  if(!sonido){
+
+    sonido = new Audio(
+    "https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
+    );
+
+  }
+
+});
 
 const qr =
 new Html5Qrcode("reader");
 
-
-/****************************************
- SONIDO
-****************************************/
-function beep(){
-
- const audio = new Audio(
- "https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
- );
-
- audio.play();
-
-}
-
-
-/****************************************
- ESCANER
-****************************************/
 qr.start(
 
- { facingMode:"environment" },
+{ facingMode:"environment" },
 
- {
-   fps:10,
-   qrbox:220
- },
+{ fps:10, qrbox:220 },
 
- (texto) => {
+(texto)=>{
 
-   if(bloqueado) return;
+  if(bloqueado) return;
 
-   bloqueado = true;
+  bloqueado=true;
 
-   beep();
+  if(sonido){
 
-   if(navigator.vibrate){
+    sonido.currentTime=0;
 
-     navigator.vibrate(200);
+    sonido.play().catch(()=>{});
 
-   }
+  }
 
-   fetch(
-    API +
-    "?codigo=" +
+  if(navigator.vibrate){
+
+    navigator.vibrate(200);
+
+  }
+
+  fetch(
+    API+
+    "?codigo="+
     encodeURIComponent(texto)
-   )
+  )
 
-   .then(r => r.json())
+  .then(r=>r.json())
 
-   .then(d => {
+  .then(d=>{
 
-      document.getElementById("nombre")
-      .innerHTML = d.nombre || "";
+    nombre.innerHTML =
+    d.nombre || "";
 
-      document.getElementById("estado")
-      .innerHTML = d.estado || "";
+    mensaje.innerHTML =
+    d.mensaje || "";
 
-      document.getElementById("mensaje")
-      .innerHTML = d.mensaje || "";
+    estado.innerHTML =
+    d.estado || "";
 
-      /********************************
-       COLORES
-      ********************************/
-      const estado =
-      document.getElementById("estado");
+    if(d.estado==="ASISTENCIA"){
+      estado.style.color="#22c55e";
+    }
 
-      if(d.estado=="ASISTENCIA"){
+    else if(d.estado==="TARDANZA"){
+      estado.style.color="#facc15";
+    }
 
-        estado.style.color="#22c55e";
+    else if(d.estado==="FALTA"){
+      estado.style.color="#ef4444";
+    }
 
-      }else if(d.estado=="TARDANZA"){
+    else if(d.estado==="DUPLICADO"){
+      estado.style.color="#f97316";
+    }
 
-        estado.style.color="#eab308";
+    if(d.foto){
 
-      }else if(d.estado=="FALTA"){
+      foto.src=d.foto;
 
-        estado.style.color="#ef4444";
+      foto.style.display="block";
 
-      }else if(d.estado=="DUPLICADO"){
+    }else{
 
-        estado.style.color="#f97316";
+      foto.style.display="none";
 
-      }
+    }
 
-      /********************************
-       FOTO
-      ********************************/
-      let foto =
-      document.getElementById("foto");
+    setTimeout(()=>{
 
-      if(d.foto){
+      bloqueado=false;
 
-        foto.src = d.foto;
+    },3000);
 
-        foto.style.display = "block";
+  })
 
-      }else{
+  .catch(err=>{
 
-        foto.style.display = "none";
+    console.log(err);
 
-      }
+    mensaje.innerHTML =
+    "Error conexión";
 
-      /********************************
-       DESBLOQUEAR
-      ********************************/
-      setTimeout(() => {
+    bloqueado=false;
 
-        bloqueado = false;
+  });
 
-      },3000);
-
-   })
-
-   .catch(err => {
-
-      console.log(err);
-
-      bloqueado = false;
-
-   });
-
- }
-
-);
+});
