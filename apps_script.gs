@@ -1,32 +1,21 @@
-// ============================================
-// APPS SCRIPT - apps_script.gs
-// ============================================
-
 function doGet(e){
 
-  // ============================================
-  // PARAMETRO QR
-  // ============================================
-
-  const codigo = e.parameter.codigo;
-
-  // ============================================
-  // HOJA
-  // ============================================
+  const codigo =
+  e.parameter.codigo;
 
   const hoja =
   SpreadsheetApp
   .getActiveSpreadsheet()
-  .getSheetByName("ESTUDIANTES");
+  .getSheetByName(
+    "ESTUDIANTES"
+  );
 
   const datos =
-  hoja.getDataRange().getValues();
+  hoja.getDataRange()
+  .getValues();
 
-  // ============================================
-  // FECHA Y HORA
-  // ============================================
-
-  const now = new Date();
+  const now =
+  new Date();
 
   const fecha =
   Utilities.formatDate(
@@ -42,29 +31,10 @@ function doGet(e){
     "HH:mm:ss"
   );
 
-  // ============================================
-  // RECORRER DATOS
-  // ============================================
-
   for(let i=1; i<datos.length; i++){
 
-    // COLUMNAS
-    // 0 CODIGO
-    // 1 DNI
-    // 2 NOMBRE
-    // 3 GRADO
-    // 4 SECCION
-    // 5 IMAGEN
-    // 6 PADRE
-    // 7 CELULAR
-    // 8 ESTADO
-    // 9 FOTO
-
-    let codigoBD = datos[i][0];
-
-    // ============================================
-    // BUSCAR QR
-    // ============================================
+    let codigoBD =
+    datos[i][0];
 
     if(codigoBD == codigo){
 
@@ -78,17 +48,20 @@ function doGet(e){
       let estado   = datos[i][8];
       let foto     = datos[i][9];
 
-      // ============================================
-      // CONVERTIR GOOGLE DRIVE
-      // ============================================
+      // CONVERTIR DRIVE
 
       if(foto){
 
-        // SI ES LINK DRIVE
-        if(foto.includes("drive.google.com")){
+        if(
+          foto.includes(
+            "drive.google.com"
+          )
+        ){
 
           let match =
-          foto.match(/\/d\/(.*?)\//);
+          foto.match(
+            /\/d\/(.*?)\//
+          );
 
           if(match && match[1]){
 
@@ -101,10 +74,6 @@ function doGet(e){
         }
 
       }
-
-      // ============================================
-      // RESPUESTA JSON
-      // ============================================
 
       return ContentService
       .createTextOutput(
@@ -125,7 +94,7 @@ function doGet(e){
           estado:"ASISTENCIA",
 
           mensaje:
-          "REGISTRADO CORRECTAMENTE",
+          "REGISTRADO",
 
           foto:foto,
 
@@ -136,16 +105,14 @@ function doGet(e){
 
       )
       .setMimeType(
-        ContentService.MimeType.JSON
+        ContentService
+        .MimeType
+        .JSON
       );
 
     }
 
   }
-
-  // ============================================
-  // NO ENCONTRADO
-  // ============================================
 
   return ContentService
   .createTextOutput(
@@ -155,15 +122,21 @@ function doGet(e){
       ok:false,
 
       nombre:"",
+
       estado:"",
-      mensaje:"ESTUDIANTE NO ENCONTRADO",
+
+      mensaje:
+      "NO ENCONTRADO",
+
       foto:""
 
     })
 
   )
   .setMimeType(
-    ContentService.MimeType.JSON
+    ContentService
+    .MimeType
+    .JSON
   );
 
 }
