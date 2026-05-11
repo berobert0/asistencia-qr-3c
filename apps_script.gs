@@ -1,247 +1,639 @@
 function doGet(e){
 
-  // ==========================================
+  // ========================================
   // PANEL
-  // ==========================================
+  // ========================================
 
-  if(e.parameter.tipo == "panel"){
+  if(e.parameter.tipo === "panel"){
+    return obtenerPanel();
+  }
 
-    return panel();
+  // ========================================
+  // LOGIN
+  // ========================================
+
+  if(e.parameter.tipo === "login"){
+    return login(e);
+  }
+
+  const lock =
+  LockService.getScriptLock();
+
+  try{
+
+    lock.waitLock(5000);
+
+    const ss =
+    SpreadsheetApp.getActive();
+
+    // ========================================
+    // HOJAS
+    // ========================================
+
+    const hojaEst =
+    ss.getSheetByName("ESTUDIANTES");
+
+    const hojaAsi =
+    ss.getSheetByName("ASISTENCIA");
+
+    // ========================================
+    // CODIGO QR
+    // ========================================
+
+    const codigo =
+    String(
+      e.parameter.codigo || ""
+    ).trim();
+
+    if(codigo === ""){
+
+      return json({
+
+        estado:"ERROR",
+        mensaje:"QR vacío"
+
+      });
+
+    }
+
+    // ========================================
+    // BUSCAR ESTUDIANTE
+    // ========================================
+
+    const estudiantes =
+    hojaEst.getDataRange()
+    .getValues();
+
+    let alumno = null;
+
+    for(let i=1; i<estudiantes.length; i++){
+
+      if(
+
+        String(estudiantes[i][0]).trim()
+
+        === codigo
+
+      ){
+
+        alumno = estudiantes[i];
+        break;
+
+      }
+
+    }
+
+    // ========================================
+    // NO ENCONTRADO
+    // ========================================
+
+    if(!alumno){
+
+      return json({
+
+        estado:"ERROR",
+
+        mensaje:"Alumno no encontrado",
+
+        nombre:"NO REGISTRADO"
+
+      });
+
+    }
+
+    // ========================================
+    // DATOS
+    // ========================================
+
+    const nombre  = alumno[2];
+    const grado   = alumno[3];
+    const seccion = alumno[4];
+
+    // FOTO = COLUMNA 9
+    const foto    = alumno[9];
+
+    // ========================================
+    // FECHA Y HORA
+    // ========================================
+
+    const now = new Date();
+
+    const fecha =
+    Utilities.formatDate(
+
+      now,
+
+      "America/Lima",
+
+      "yyyy-MM-dd"
+
+    );
+
+    const hora =
+    Utilities.formatDate(
+
+      now,
+
+      "America/Lima",
+
+      "HH:mm:ss"
+
+    );
+
+    // ========================================
+    // ESTADO HORARIO
+    // ========================================
+
+    const estado =
+    obtenerEstado(now);
+
+    // ========================================
+    // FUERA DE HORARIO
+    // ========================================
+
+    if(
+
+      estado === "FUERA DE HORARIO" ||
+
+      estado === "SIN CLASES"
+
+    ){
+
+      return json({
+
+        nombre:nombre,
+
+        estado:estado,
+
+        mensaje:"Registro no permitido",
+
+        foto:foto
+
+      });
+
+    }
+
+    // ========================================
+    // VALIDAR DUPLICADO
+    // ========================================
+
+    const asistencia =
+    hojaAsi.getDataRange()
+    .getValues();
+
+    let duplicado =
+    asistencia.find(f=>{
+
+      let fechaFila =
+      Utilities.formatDate(
+
+        new Date(f[4]),
+
+        "America/Lima",
+
+        "yyyy-MM-dd"
+
+      );
+
+      return (
+
+        String(f[0]).trim()
+        === codigo &&
+
+        fechaFila === fecha
+
+      );
+
+    });
+
+    // ========================================
+    // DUPLICADO
+    // ========================================
+
+    if(duplicado){
+
+      return json({
+
+        nombre:nombre,
+
+        estado:"DUPLICADO",
+
+        mensaje:"Ya registró hoy",
+
+        foto:foto
+
+      });
+
+    }
+
+    // ========================================
+    // GUARDAR ASISTENCIA
+    // ========================================
+
+    hojaAsi.appendRow([
+
+      codigo,
+      nombre,
+      grado,
+      seccion,
+      fecha,
+      hora,
+      estado,
+      "QR",
+      ""
+
+    ]);
+
+    // ========================================
+    // ALERTAS
+    // ========================================
+
+    revisarAlertas(
+
+      codigo,
+      nombre
+
+    );
+
+    // ========================================
+    // RESPUESTA
+    // ========================================
+
+    return json({
+
+      nombre:nombre,
+
+      estado:estado,
+
+      mensaje:"Registro correcto",
+
+      foto:foto
+
+    });
 
   }
 
-  // ==========================================
-  // CODIGO QR
-  // ==========================================
+  catch(error){
 
-  const codigo = e.parameter.codigo;
+    return json({
 
-  // ==========================================
-  // HOJA ESTUDIANTES
-  // ==========================================
+      estado:"ERROR",
+
+      mensaje:error.toString()
+
+    });
+
+  }
+
+  finally{
+
+    lock.releaseLock();
+
+  }
+
+}
+
+
+// ========================================
+// LOGIN
+// ========================================
+
+function login(e){
 
   const hoja =
   SpreadsheetApp
-  .getActiveSpreadsheet()
-  .getSheetByName("ESTUDIANTES");
+  .getActive()
+  .getSheetByName("USUARIOS");
 
   const datos =
-  hoja.getDataRange().getValues();
-
-  // ==========================================
-  // FECHA Y HORA
-  // ==========================================
-
-  const now = new Date();
-
-  const fecha =
-  Utilities.formatDate(
-    now,
-    Session.getScriptTimeZone(),
-    "yyyy-MM-dd"
-  );
-
-  const hora =
-  Utilities.formatDate(
-    now,
-    Session.getScriptTimeZone(),
-    "HH:mm:ss"
-  );
-
-  // ==========================================
-  // BUSCAR ESTUDIANTE
-  // ==========================================
+  hoja.getDataRange()
+  .getValues();
 
   for(let i=1; i<datos.length; i++){
 
-    // ESTUDIANTES
-    // 0 CODIGO
-    // 1 DNI
-    // 2 NOMBRE
-    // 3 GRADO
-    // 4 SECCION
-    // 5 IMAGEN
-    // 6 PADRE
-    // 7 CELULAR
-    // 8 ESTADO
-    // 9 FOTO
+    if(
 
-    let codigoBD = datos[i][0];
+      datos[i][0] === e.parameter.user &&
 
-    if(codigoBD == codigo){
+      datos[i][1] === e.parameter.pass
 
-      let nombre  = datos[i][2];
-      let grado   = datos[i][3];
-      let seccion = datos[i][4];
-      let foto    = datos[i][9];
+    ){
 
-      // ==========================================
-      // EVITAR DUPLICADOS
-      // ==========================================
+      return json({
 
-      const hojaAsistencia =
-      SpreadsheetApp
-      .getActiveSpreadsheet()
-      .getSheetByName("ASISTENCIA");
+        ok:true,
 
-      const registros =
-      hojaAsistencia
-      .getDataRange()
-      .getValues();
+        rol:datos[i][2]
 
-      let duplicado = false;
-
-      for(let j=1; j<registros.length; j++){
-
-        let cod = registros[j][0];
-        let fec = registros[j][4];
-
-        if(cod == codigo && fec == fecha){
-
-          duplicado = true;
-          break;
-
-        }
-
-      }
-
-      // ==========================================
-      // ESTADO
-      // ==========================================
-
-      let estado = duplicado
-      ? "DUPLICADO"
-      : "ASISTENCIA";
-
-      // ==========================================
-      // GUARDAR ASISTENCIA
-      // ==========================================
-
-      if(!duplicado){
-
-        hojaAsistencia.appendRow([
-
-          codigoBD,
-          nombre,
-          grado,
-          seccion,
-          fecha,
-          hora,
-          estado,
-          "QR",
-          ""
-
-        ]);
-
-      }
-
-      // ==========================================
-      // RESPUESTA
-      // ==========================================
-
-      return ContentService
-      .createTextOutput(
-
-        JSON.stringify({
-
-          ok:true,
-
-          codigo:codigoBD,
-          nombre:nombre,
-          grado:grado,
-          seccion:seccion,
-
-          estado:estado,
-
-          mensaje:
-          duplicado
-          ? "YA REGISTRADO"
-          : "REGISTRADO CORRECTAMENTE",
-
-          foto:foto,
-
-          fecha:fecha,
-          hora:hora
-
-        })
-
-      )
-      .setMimeType(
-        ContentService.MimeType.JSON
-      );
+      });
 
     }
 
   }
 
-  // ==========================================
-  // NO ENCONTRADO
-  // ==========================================
+  return json({
 
-  return ContentService
-  .createTextOutput(
+    ok:false
 
-    JSON.stringify({
-
-      ok:false,
-
-      nombre:"",
-      estado:"",
-      mensaje:"ESTUDIANTE NO ENCONTRADO",
-      foto:""
-
-    })
-
-  )
-  .setMimeType(
-    ContentService.MimeType.JSON
-  );
+  });
 
 }
 
 
-// ==========================================
-// PANEL EN VIVO
-// ==========================================
+// ========================================
+// PANEL
+// ========================================
 
-function panel(){
+function obtenerPanel(){
 
   const hoja =
   SpreadsheetApp
-  .getActiveSpreadsheet()
+  .getActive()
   .getSheetByName("ASISTENCIA");
 
   const datos =
-  hoja.getDataRange().getValues();
+  hoja.getDataRange()
+  .getValues();
 
-  datos.shift();
+  let lista=[];
 
-  let lista = [];
-
-  datos.forEach(fila=>{
+  for(let i=1; i<datos.length; i++){
 
     lista.push({
 
-      codigo : fila[0],
-      nombre : fila[1],
-      grado  : fila[2],
-      seccion: fila[3],
-      fecha  : fila[4],
-      hora   : fila[5],
-      estado : fila[6],
-      origen : fila[7],
-      obs    : fila[8]
+      codigo : datos[i][0],
+      nombre : datos[i][1],
+      grado  : datos[i][2],
+      seccion: datos[i][3],
+      fecha  : datos[i][4],
+      hora   : datos[i][5],
+      estado : datos[i][6],
+      origen : datos[i][7],
+      obs    : datos[i][8]
 
     });
 
-  });
+  }
+
+  return json(lista);
+
+}
+
+
+// ========================================
+// HORARIO
+// ========================================
+
+function obtenerEstado(now){
+
+  const dia =
+  now.getDay();
+
+  // DOMINGO O SABADO
+
+  if(
+
+    dia === 0 ||
+
+    dia === 6
+
+  ){
+
+    return "SIN CLASES";
+
+  }
+
+  let m =
+
+  now.getHours()*60 +
+
+  now.getMinutes();
+
+  // 7:40 -> 12:40
+
+  if(
+
+    m < 460 ||
+
+    m > 760
+
+  ){
+
+    return "FUERA DE HORARIO";
+
+  }
+
+  // ASISTENCIA
+
+  if(m <= 480){
+
+    return "ASISTENCIA";
+
+  }
+
+  // TARDANZA
+
+  if(m <= 540){
+
+    return "TARDANZA";
+
+  }
+
+  // FALTA
+
+  return "FALTA";
+
+}
+
+
+// ========================================
+// ALERTAS
+// ========================================
+
+function revisarAlertas(codigo,nombre){
+
+  const ss =
+  SpreadsheetApp.getActive();
+
+  const hojaAsi =
+  ss.getSheetByName("ASISTENCIA");
+
+  const hojaAle =
+  ss.getSheetByName("ALERTAS");
+
+  const datos =
+  hojaAsi.getDataRange()
+  .getValues();
+
+  let tardanzas = 0;
+  let faltas = 0;
+
+  for(let i=1; i<datos.length; i++){
+
+    if(datos[i][0] == codigo){
+
+      if(datos[i][6] == "TARDANZA"){
+
+        tardanzas++;
+
+      }
+
+      if(datos[i][6] == "FALTA"){
+
+        faltas++;
+
+      }
+
+    }
+
+  }
+
+  // ALERTA TARDANZA
+
+  if(tardanzas >= 3){
+
+    hojaAle.appendRow([
+
+      new Date(),
+      codigo,
+      nombre,
+      "TARDANZA",
+      "3 tardanzas acumuladas",
+      "MEDIO"
+
+    ]);
+
+  }
+
+  // ALERTA DEMUNA
+
+  if(faltas >= 5){
+
+    hojaAle.appendRow([
+
+      new Date(),
+      codigo,
+      nombre,
+      "DEMUNA",
+      "Posible abandono escolar",
+      "ALTO"
+
+    ]);
+
+  }
+
+}
+
+
+// ========================================
+// FALTANTES AUTOMATICOS
+// ========================================
+
+function marcarFaltantes(){
+
+  const ss =
+  SpreadsheetApp.getActive();
+
+  const hojaEst =
+  ss.getSheetByName("ESTUDIANTES");
+
+  const hojaAsi =
+  ss.getSheetByName("ASISTENCIA");
+
+  const estudiantes =
+  hojaEst.getDataRange()
+  .getValues();
+
+  const asistencia =
+  hojaAsi.getDataRange()
+  .getValues();
+
+  const hoy =
+  Utilities.formatDate(
+
+    new Date(),
+
+    "America/Lima",
+
+    "yyyy-MM-dd"
+
+  );
+
+  let registrados = {};
+
+  for(let i=1; i<asistencia.length; i++){
+
+    let fechaFila =
+    Utilities.formatDate(
+
+      new Date(asistencia[i][4]),
+
+      "America/Lima",
+
+      "yyyy-MM-dd"
+
+    );
+
+    if(fechaFila === hoy){
+
+      registrados[
+        asistencia[i][0]
+      ] = true;
+
+    }
+
+  }
+
+  for(let i=1; i<estudiantes.length; i++){
+
+    const codigo  = estudiantes[i][0];
+    const nombre  = estudiantes[i][2];
+    const grado   = estudiantes[i][3];
+    const seccion = estudiantes[i][4];
+
+    if(!registrados[codigo]){
+
+      hojaAsi.appendRow([
+
+        codigo,
+        nombre,
+        grado,
+        seccion,
+        hoy,
+        "09:01:00",
+        "FALTA",
+        "TRIGGER",
+        "Automático"
+
+      ]);
+
+    }
+
+  }
+
+}
+
+
+// ========================================
+// JSON
+// ========================================
+
+function json(obj){
 
   return ContentService
+
   .createTextOutput(
-    JSON.stringify(lista)
+
+    JSON.stringify(obj)
+
   )
+
   .setMimeType(
-    ContentService.MimeType.JSON
+
+    ContentService
+    .MimeType
+    .JSON
+
   );
 
 }
