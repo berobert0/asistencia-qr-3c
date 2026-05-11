@@ -1,17 +1,17 @@
-const API="https://script.google.com/macros/s/AKfycbyPbslr15y2s-jxxh5xUJ1PPw2ruyMp0pwI8sT8XXH8-dCTIn6_elkWc8Mla1tS7Lg/exec";
+const API =
+"https://script.google.com/macros/s/AKfycbxivZO64l9vCuvubiFDj01Y4fIgIkRzbsKRxyXxp8Lo-qy7V_pXOIiDvx2Hi7x9QHAQ/exec";
 
 let bloqueado=false;
 
 let sonido;
 
-// SONIDO
 document.body.addEventListener("click", ()=>{
 
   if(!sonido){
 
     sonido = new Audio(
 
-      "https://drive.google.com/uc?export=download&id=1ech4VhO76WcQtg_yJH8zU-PIUCbQSqiv"
+      "https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"
 
     );
 
@@ -19,51 +19,6 @@ document.body.addEventListener("click", ()=>{
 
 });
 
-// HORARIO
-function obtenerEstadoPorHora(){
-
-  let ahora = new Date();
-
-  let horas = ahora.getHours();
-  let minutos = ahora.getMinutes();
-
-  let horaActual =
-  horas * 60 + minutos;
-
-  const inicio = 460;
-  const asistencia = 480;
-  const tardanza = 540;
-  const salida = 760;
-
-  if(horaActual < inicio){
-
-    return "FUERA DE HORARIO";
-
-  }
-  else if(horaActual <= asistencia){
-
-    return "ASISTENCIA";
-
-  }
-  else if(horaActual <= tardanza){
-
-    return "TARDANZA";
-
-  }
-  else if(horaActual <= salida){
-
-    return "FALTA";
-
-  }
-  else{
-
-    return "FUERA DE HORARIO";
-
-  }
-
-}
-
-// ESCANER
 const qr =
 new Html5Qrcode("reader");
 
@@ -77,12 +32,12 @@ qr.start(
 
   if(bloqueado) return;
 
-  bloqueado = true;
+  bloqueado=true;
 
   // SONIDO
   if(sonido){
 
-    sonido.currentTime = 0;
+    sonido.currentTime=0;
 
     sonido.play().catch(()=>{});
 
@@ -95,7 +50,6 @@ qr.start(
 
   }
 
-  // API
   fetch(
 
     API +
@@ -106,14 +60,7 @@ qr.start(
 
   )
 
-  .then(r=>{
-
-    if(!r.ok)
-    throw new Error("Servidor");
-
-    return r.json();
-
-  })
+  .then(r=>r.json())
 
   .then(d=>{
 
@@ -121,7 +68,7 @@ qr.start(
       "nombre"
     ).innerHTML =
 
-    d.nombre || "SIN NOMBRE";
+    d.nombre || "";
 
     document.getElementById(
       "mensaje"
@@ -129,62 +76,47 @@ qr.start(
 
     d.mensaje || "";
 
-    let estadoHTML =
+    let estado =
     document.getElementById(
       "estado"
     );
 
-    let estadoFinal =
-    d.estado;
+    estado.innerHTML =
+    d.estado || "";
 
-    switch(estadoFinal){
+    switch(d.estado){
 
       case "ASISTENCIA":
 
-        estadoHTML.innerHTML =
-        "🟢 ASISTENCIA";
-
-        estadoHTML.style.color =
+        estado.style.color =
         "#22c55e";
 
       break;
 
       case "TARDANZA":
 
-        estadoHTML.innerHTML =
-        "🟡 TARDANZA";
-
-        estadoHTML.style.color =
+        estado.style.color =
         "#facc15";
 
       break;
 
       case "FALTA":
 
-        estadoHTML.innerHTML =
-        "🔴 FALTA";
-
-        estadoHTML.style.color =
+        estado.style.color =
         "#ef4444";
 
       break;
 
       case "DUPLICADO":
 
-        estadoHTML.innerHTML =
-        "⚠️ DUPLICADO";
-
-        estadoHTML.style.color =
+        estado.style.color =
         "#f97316";
 
       break;
 
       default:
 
-        estadoHTML.innerHTML =
-        "⏰ " + estadoFinal;
-
-        estadoHTML.style.color =
+        estado.style.color =
         "#9ca3af";
 
     }
@@ -198,7 +130,6 @@ qr.start(
     if(
 
       d.foto &&
-
       d.foto.startsWith("http")
 
     ){
@@ -217,7 +148,7 @@ qr.start(
 
     setTimeout(()=>{
 
-      bloqueado = false;
+      bloqueado=false;
 
     },3000);
 
@@ -227,16 +158,9 @@ qr.start(
 
     console.error(err);
 
-    document.getElementById(
-      "mensaje"
-    ).innerHTML =
-
-    "❌ Error conexión";
-
-    bloqueado = false;
+    bloqueado=false;
 
   });
 
 }
-
 );
