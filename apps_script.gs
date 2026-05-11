@@ -1,336 +1,119 @@
 function doGet(e){
 
-  const lock = LockService.getScriptLock();
+  const codigo = e.parameter.codigo;
 
-  try{
+  const hoja =
+  SpreadsheetApp
+  .getActiveSpreadsheet()
+  .getSheetByName("ALUMNOS");
 
-    lock.waitLock(5000);
+  const datos =
+  hoja.getDataRange().getValues();
 
-    /********************************
-     PANEL
-    ********************************/
-    if(e.parameter.tipo=="panel"){
-      return obtenerPanel();
-    }
+  // FECHA Y HORA
+  const now = new Date();
 
-    /********************************
-     LOGIN
-    ********************************/
-    if(e.parameter.tipo=="login"){
-      return login(e);
-    }
+  const fecha =
+  Utilities.formatDate(
+    now,
+    Session.getScriptTimeZone(),
+    "yyyy-MM-dd"
+  );
 
-    /********************************
-     CODIGO QR
-    ********************************/
-    const codigo =
-    String(e.parameter.codigo || "").trim();
+  const hora =
+  Utilities.formatDate(
+    now,
+    Session.getScriptTimeZone(),
+    "HH:mm:ss"
+  );
 
-    if(codigo==""){
+  // RECORRER
+  for(let i=1; i<datos.length; i++){
 
-      return json({
-        estado:"ERROR",
-        mensaje:"Código vacío"
-      });
+    let codigoBD = datos[i][0];
 
-    }
+    if(codigoBD == codigo){
 
-    const ss =
-    SpreadsheetApp.getActiveSpreadsheet();
+      let nombre   = datos[i][2];
+      let grado    = datos[i][3];
+      let seccion  = datos[i][4];
+      let imagen   = datos[i][5];
+      let padre    = datos[i][6];
+      let celular  = datos[i][7];
+      let estado   = datos[i][8];
+      let foto     = datos[i][9];
 
-    const hojaEst =
-    ss.getSheetByName("ESTUDIANTES");
+      // CONVERTIR LINK DRIVE
+      if(foto && foto.includes("drive.google.com")){
 
-    const hojaAsi =
-    ss.getSheetByName("ASISTENCIA");
+        let match =
+        foto.match(/\/d\/(.*?)\//);
 
-    /********************************
-     LEER ESTUDIANTES
-    ********************************/
-    const estudiantes =
-    hojaEst.getDataRange().getValues();
+        if(match && match[1]){
 
-    let alumno = null;
+          foto =
+          "https://drive.google.com/uc?export=view&id=" +
+          match[1];
 
-    for(let i=1;i<estudiantes.length;i++){
-
-      const codigoBD =
-      String(estudiantes[i][0]).trim();
-
-      if(codigoBD == codigo){
-
-        alumno = estudiantes[i];
-
-        break;
+        }
 
       }
 
-    }
+      // RESPUESTA JSON
+      return ContentService
+      .createTextOutput(
 
-    /********************************
-     NO EXISTE
-    ********************************/
-    if(!alumno){
+        JSON.stringify({
 
-      return json({
+          ok:true,
 
-        nombre:"NO ENCONTRADO",
-
-        estado:"ERROR",
-
-        mensaje:"Código inválido"
-
-      });
-
-    }
-
-    /********************************
-     DATOS ESTUDIANTE
-    ********************************/
-    const nombre = alumno[2];
-    const aula = alumno[3];
-    const foto = alumno[4];
-
-    /********************************
-     FECHA Y HORA
-    ********************************/
-    const ahora = new Date();
-
-    const fecha =
-    Utilities.formatDate(
-      ahora,
-      "America/Lima",
-      "yyyy-MM-dd"
-    );
-
-    const hora =
-    Utilities.formatDate(
-      ahora,
-      "America/Lima",
-      "HH:mm:ss"
-    );
-
-    /********************************
-     VALIDAR DUPLICADO
-    ********************************/
-    const registros =
-    hojaAsi.getDataRange().getValues();
-
-    for(let i=1;i<registros.length;i++){
-
-      const codReg =
-      String(registros[i][0]).trim();
-
-      const fechaReg =
-      registros[i][2];
-
-      if(
-        codReg == codigo &&
-        fechaReg == fecha
-      ){
-
-        return json({
-
+          codigo:codigoBD,
           nombre:nombre,
+          grado:grado,
+          seccion:seccion,
+          padre:padre,
+          celular:celular,
 
-          estado:"DUPLICADO",
+          estado:"ASISTENCIA",
 
-          mensaje:"Ya registró asistencia hoy",
+          mensaje:
+          "REGISTRADO CORRECTAMENTE",
 
-          foto:foto
+          foto:foto,
 
-        });
+          fecha:fecha,
+          hora:hora
 
-      }
+        })
 
-    }
-
-    /********************************
-     ESTADO
-    ********************************/
-    const estado =
-    obtenerEstado(ahora);
-
-    /********************************
-     GUARDAR
-    ********************************/
-    hojaAsi.appendRow([
-
-      codigo,
-      nombre,
-      fecha,
-      hora,
-      estado,
-      "QR"
-
-    ]);
-
-    /********************************
-     RESPUESTA
-    ********************************/
-    return json({
-
-      nombre:nombre,
-
-      estado:estado,
-
-      mensaje:"Registro correcto",
-
-      foto:foto,
-
-      aula:aula
-
-    });
-
-  }
-
-  catch(error){
-
-    return json({
-
-      estado:"ERROR",
-
-      mensaje:error.toString()
-
-    });
-
-  }
-
-}
-
-
-/****************************************
- LOGIN
-****************************************/
-function login(e){
-
-  const hoja =
-  SpreadsheetApp
-  .getActiveSpreadsheet()
-  .getSheetByName("USUARIOS");
-
-  const datos =
-  hoja.getDataRange().getValues();
-
-  for(let i=1;i<datos.length;i++){
-
-    if(
-
-      datos[i][0] == e.parameter.user &&
-
-      datos[i][1] == e.parameter.pass
-
-    ){
-
-      return json({
-
-        ok:true,
-
-        rol:datos[i][2]
-
-      });
+      )
+      .setMimeType(
+        ContentService.MimeType.JSON
+      );
 
     }
 
   }
 
-  return json({
-
-    ok:false
-
-  });
-
-}
-
-
-/****************************************
- PANEL
-****************************************/
-function obtenerPanel(){
-
-  const hoja =
-  SpreadsheetApp
-  .getActiveSpreadsheet()
-  .getSheetByName("ASISTENCIA");
-
-  const datos =
-  hoja.getDataRange().getValues();
-
-  let lista = [];
-
-  for(let i=1;i<datos.length;i++){
-
-    lista.push({
-
-      nombre:datos[i][1],
-
-      hora:datos[i][3],
-
-      estado:datos[i][4]
-
-    });
-
-  }
-
-  return json(lista);
-
-}
-
-
-/****************************************
- HORARIO
-****************************************/
-function obtenerEstado(now){
-
-  let minutos =
-
-  now.getHours()*60 +
-
-  now.getMinutes();
-
-  /********************************
-   7:40 - 8:00
-  ********************************/
-  if(
-    minutos >= 460 &&
-    minutos <= 480
-  ){
-
-    return "ASISTENCIA";
-
-  }
-
-  /********************************
-   8:01 - 9:00
-  ********************************/
-  if(
-    minutos >= 481 &&
-    minutos <= 540
-  ){
-
-    return "TARDANZA";
-
-  }
-
-  /********************************
-   MÁS DE 9:00
-  ********************************/
-  return "FALTA";
-
-}
-
-
-/****************************************
- JSON
-****************************************/
-function json(obj){
-
+  // NO ENCONTRADO
   return ContentService
-
   .createTextOutput(
-    JSON.stringify(obj)
-  )
 
+    JSON.stringify({
+
+      ok:false,
+
+      nombre:"",
+
+      estado:"",
+
+      mensaje:"NO ENCONTRADO",
+
+      foto:""
+
+    })
+
+  )
   .setMimeType(
     ContentService.MimeType.JSON
   );
