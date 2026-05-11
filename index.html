@@ -4,36 +4,52 @@
 <head>
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
 
 <title>CONTROL QR</title>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet"
+href="style.css">
 
 </head>
 
 <body>
 
-<div class="contenedor">
+<div class="header">
 
-  <h1>📷 CONTROL DE ASISTENCIA</h1>
+<h2>
+I.E. 5074 Alcides Spelucín Vega
+</h2>
 
-  <!-- QR -->
-  <div id="reader"></div>
+<p>3ro C Nivel Primaria</p>
 
-  <!-- FOTO -->
-  <img id="foto">
+<p>
+👨‍🏫 Prof. Robert Egúsquiza C.
+</p>
 
-  <!-- NOMBRE -->
-  <div id="nombre">ESCANEAR QR</div>
+<p>
+🕒 7:40am - 12:40pm
+</p>
 
-  <!-- ESTADO -->
-  <div id="estado"></div>
+</div>
 
-  <!-- MENSAJE -->
-  <div id="mensaje"></div>
+<div id="reader"></div>
+
+<div class="panel">
+
+<img id="foto" class="foto">
+
+<div id="nombre" class="nombre">
+ESCANEAR QR
+</div>
+
+<div id="estado" class="estado"></div>
+
+<div id="mensaje" class="mensaje"></div>
 
 </div>
 
