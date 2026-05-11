@@ -1,15 +1,19 @@
 const API =
 "https://script.google.com/macros/s/AKfycbz5RfBkeCIPa5zcayzbtpe3YYuzAmoCAzep-7q1VH_MO4AMt1OUz3aQ5sjeKkDaq_uf/exec";
 
-let bloqueado=false;
-let sonido;
+let bloqueado = false;
 
-document.body.addEventListener("click",()=>{
+const qr =
+new Html5Qrcode("reader");
 
-  if(!sonido){
 
-    sonido = new Audio(
-    "https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
+/****************************************
+ SONIDO
+****************************************/
+function beep(){
+
+ const audio = new Audio(
+ "https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
     );
 
   }
