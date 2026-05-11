@@ -1,7 +1,7 @@
 function doGet(e){
 
   // ==========================================
-  // PANEL EN VIVO
+  // PANEL
   // ==========================================
 
   if(e.parameter.tipo == "panel"){
@@ -17,7 +17,7 @@ function doGet(e){
   const codigo = e.parameter.codigo;
 
   // ==========================================
-  // HOJA
+  // HOJA ESTUDIANTES
   // ==========================================
 
   const hoja =
@@ -49,69 +49,94 @@ function doGet(e){
   );
 
   // ==========================================
-  // RECORRER
+  // BUSCAR ESTUDIANTE
   // ==========================================
 
   for(let i=1; i<datos.length; i++){
+
+    // ESTUDIANTES
+    // 0 CODIGO
+    // 1 DNI
+    // 2 NOMBRE
+    // 3 GRADO
+    // 4 SECCION
+    // 5 IMAGEN
+    // 6 PADRE
+    // 7 CELULAR
+    // 8 ESTADO
+    // 9 FOTO
 
     let codigoBD = datos[i][0];
 
     if(codigoBD == codigo){
 
-      let dni      = datos[i][1];
-      let nombre   = datos[i][2];
-      let grado    = datos[i][3];
-      let seccion  = datos[i][4];
-      let imagen   = datos[i][5];
-      let padre    = datos[i][6];
-      let celular  = datos[i][7];
-      let estado   = datos[i][8];
-      let foto     = datos[i][9];
+      let nombre  = datos[i][2];
+      let grado   = datos[i][3];
+      let seccion = datos[i][4];
+      let foto    = datos[i][9];
 
       // ==========================================
-      // CONVERTIR GOOGLE DRIVE
+      // EVITAR DUPLICADOS
       // ==========================================
 
-      if(foto){
+      const hojaAsistencia =
+      SpreadsheetApp
+      .getActiveSpreadsheet()
+      .getSheetByName("ASISTENCIA");
 
-        if(foto.includes("drive.google.com")){
+      const registros =
+      hojaAsistencia
+      .getDataRange()
+      .getValues();
 
-          let match =
-          foto.match(/\/d\/(.*?)\//);
+      let duplicado = false;
 
-          if(match && match[1]){
+      for(let j=1; j<registros.length; j++){
 
-            foto =
-            "https://drive.google.com/uc?export=view&id=" +
-            match[1];
+        let cod = registros[j][0];
+        let fec = registros[j][4];
 
-          }
+        if(cod == codigo && fec == fecha){
+
+          duplicado = true;
+          break;
 
         }
 
       }
 
       // ==========================================
-      // REGISTRAR ASISTENCIA
+      // ESTADO
       // ==========================================
 
-      let hojaAsistencia =
-      SpreadsheetApp
-      .getActiveSpreadsheet()
-      .getSheetByName("ASISTENCIA");
-
-      hojaAsistencia.appendRow([
-
-        codigoBD,
-        nombre,
-        fecha,
-        hora,
-        "ASISTENCIA"
-
-      ]);
+      let estado = duplicado
+      ? "DUPLICADO"
+      : "ASISTENCIA";
 
       // ==========================================
-      // RESPUESTA JSON
+      // GUARDAR ASISTENCIA
+      // ==========================================
+
+      if(!duplicado){
+
+        hojaAsistencia.appendRow([
+
+          codigoBD,
+          nombre,
+          grado,
+          seccion,
+          fecha,
+          hora,
+          estado,
+          "QR",
+          ""
+
+        ]);
+
+      }
+
+      // ==========================================
+      // RESPUESTA
       // ==========================================
 
       return ContentService
@@ -122,18 +147,16 @@ function doGet(e){
           ok:true,
 
           codigo:codigoBD,
-          dni:dni,
           nombre:nombre,
           grado:grado,
           seccion:seccion,
 
-          padre:padre,
-          celular:celular,
-
-          estado:"ASISTENCIA",
+          estado:estado,
 
           mensaje:
-          "REGISTRADO CORRECTAMENTE",
+          duplicado
+          ? "YA REGISTRADO"
+          : "REGISTRADO CORRECTAMENTE",
 
           foto:foto,
 
@@ -164,7 +187,7 @@ function doGet(e){
 
       nombre:"",
       estado:"",
-      mensaje:"NO ENCONTRADO",
+      mensaje:"ESTUDIANTE NO ENCONTRADO",
       foto:""
 
     })
@@ -178,7 +201,7 @@ function doGet(e){
 
 
 // ==========================================
-// PANEL
+// PANEL EN VIVO
 // ==========================================
 
 function panel(){
@@ -199,11 +222,15 @@ function panel(){
 
     lista.push({
 
-      codigo:fila[0],
-      nombre:fila[1],
-      fecha:fila[2],
-      hora:fila[3],
-      estado:fila[4]
+      codigo : fila[0],
+      nombre : fila[1],
+      grado  : fila[2],
+      seccion: fila[3],
+      fecha  : fila[4],
+      hora   : fila[5],
+      estado : fila[6],
+      origen : fila[7],
+      obs    : fila[8]
 
     });
 
