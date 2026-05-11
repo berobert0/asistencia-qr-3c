@@ -1,21 +1,38 @@
 function doGet(e){
 
-  const codigo =
-  e.parameter.codigo;
+  // ==========================================
+  // PANEL EN VIVO
+  // ==========================================
+
+  if(e.parameter.tipo == "panel"){
+
+    return panel();
+
+  }
+
+  // ==========================================
+  // CODIGO QR
+  // ==========================================
+
+  const codigo = e.parameter.codigo;
+
+  // ==========================================
+  // HOJA
+  // ==========================================
 
   const hoja =
   SpreadsheetApp
   .getActiveSpreadsheet()
-  .getSheetByName(
-    "ESTUDIANTES"
-  );
+  .getSheetByName("ESTUDIANTES");
 
   const datos =
-  hoja.getDataRange()
-  .getValues();
+  hoja.getDataRange().getValues();
 
-  const now =
-  new Date();
+  // ==========================================
+  // FECHA Y HORA
+  // ==========================================
+
+  const now = new Date();
 
   const fecha =
   Utilities.formatDate(
@@ -31,10 +48,13 @@ function doGet(e){
     "HH:mm:ss"
   );
 
+  // ==========================================
+  // RECORRER
+  // ==========================================
+
   for(let i=1; i<datos.length; i++){
 
-    let codigoBD =
-    datos[i][0];
+    let codigoBD = datos[i][0];
 
     if(codigoBD == codigo){
 
@@ -48,20 +68,16 @@ function doGet(e){
       let estado   = datos[i][8];
       let foto     = datos[i][9];
 
-      // CONVERTIR DRIVE
+      // ==========================================
+      // CONVERTIR GOOGLE DRIVE
+      // ==========================================
 
       if(foto){
 
-        if(
-          foto.includes(
-            "drive.google.com"
-          )
-        ){
+        if(foto.includes("drive.google.com")){
 
           let match =
-          foto.match(
-            /\/d\/(.*?)\//
-          );
+          foto.match(/\/d\/(.*?)\//);
 
           if(match && match[1]){
 
@@ -74,6 +90,29 @@ function doGet(e){
         }
 
       }
+
+      // ==========================================
+      // REGISTRAR ASISTENCIA
+      // ==========================================
+
+      let hojaAsistencia =
+      SpreadsheetApp
+      .getActiveSpreadsheet()
+      .getSheetByName("ASISTENCIA");
+
+      hojaAsistencia.appendRow([
+
+        codigoBD,
+        nombre,
+        fecha,
+        hora,
+        "ASISTENCIA"
+
+      ]);
+
+      // ==========================================
+      // RESPUESTA JSON
+      // ==========================================
 
       return ContentService
       .createTextOutput(
@@ -94,7 +133,7 @@ function doGet(e){
           estado:"ASISTENCIA",
 
           mensaje:
-          "REGISTRADO",
+          "REGISTRADO CORRECTAMENTE",
 
           foto:foto,
 
@@ -105,14 +144,16 @@ function doGet(e){
 
       )
       .setMimeType(
-        ContentService
-        .MimeType
-        .JSON
+        ContentService.MimeType.JSON
       );
 
     }
 
   }
+
+  // ==========================================
+  // NO ENCONTRADO
+  // ==========================================
 
   return ContentService
   .createTextOutput(
@@ -122,21 +163,58 @@ function doGet(e){
       ok:false,
 
       nombre:"",
-
       estado:"",
-
-      mensaje:
-      "NO ENCONTRADO",
-
+      mensaje:"NO ENCONTRADO",
       foto:""
 
     })
 
   )
   .setMimeType(
-    ContentService
-    .MimeType
-    .JSON
+    ContentService.MimeType.JSON
+  );
+
+}
+
+
+// ==========================================
+// PANEL
+// ==========================================
+
+function panel(){
+
+  const hoja =
+  SpreadsheetApp
+  .getActiveSpreadsheet()
+  .getSheetByName("ASISTENCIA");
+
+  const datos =
+  hoja.getDataRange().getValues();
+
+  datos.shift();
+
+  let lista = [];
+
+  datos.forEach(fila=>{
+
+    lista.push({
+
+      codigo:fila[0],
+      nombre:fila[1],
+      fecha:fila[2],
+      hora:fila[3],
+      estado:fila[4]
+
+    });
+
+  });
+
+  return ContentService
+  .createTextOutput(
+    JSON.stringify(lista)
+  )
+  .setMimeType(
+    ContentService.MimeType.JSON
   );
 
 }
