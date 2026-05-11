@@ -7,31 +7,20 @@ const API =
 
 let bloqueado = false;
 
-let sonidoQR = null;
-
 // ======================================
-// ACTIVAR SONIDO
+// SONIDO QR
 // ======================================
 
-document.body.addEventListener("click", ()=>{
+const sonidoQR = new Audio(
 
-  // Android requiere interacción del usuario
-  if(!sonidoQR){
+  "https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
 
-    sonidoQR = new Audio(
+);
 
-      "https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
+// PRECARGAR
+sonidoQR.load();
 
-    );
-
-    sonidoQR.volume = 1;
-
-    console.log("🔊 Sonido QR activado");
-
-  }
-
-},{ once:true });
-
+sonidoQR.volume = 1;
 
 // ======================================
 // REPRODUCIR SONIDO
@@ -39,15 +28,13 @@ document.body.addEventListener("click", ()=>{
 
 function reproducirSonido(){
 
-  if(!sonidoQR) return;
-
   sonidoQR.currentTime = 0;
 
   sonidoQR.play()
 
   .then(()=>{
 
-    console.log("✅ Sonido reproducido");
+    console.log("🔊 SONIDO OK");
 
   })
 
@@ -55,7 +42,7 @@ function reproducirSonido(){
 
     console.log(
 
-      "❌ Error sonido:",
+      "ERROR AUDIO",
 
       error
 
@@ -65,9 +52,8 @@ function reproducirSonido(){
 
 }
 
-
 // ======================================
-// ESCANER QR
+// QR
 // ======================================
 
 const qr =
@@ -85,7 +71,7 @@ qr.start(
 (texto)=>{
 
   // ======================================
-  // BLOQUEO
+  // BLOQUEAR
   // ======================================
 
   if(bloqueado) return;
@@ -99,7 +85,7 @@ qr.start(
   reproducirSonido();
 
   // ======================================
-  // VIBRACION
+  // VIBRACIÓN
   // ======================================
 
   if(navigator.vibrate){
@@ -109,7 +95,7 @@ qr.start(
   }
 
   // ======================================
-  // CONSULTA API
+  // API
   // ======================================
 
   fetch(
@@ -126,7 +112,11 @@ qr.start(
 
     if(!r.ok){
 
-      throw new Error("Error servidor");
+      throw new Error(
+
+        "Error servidor"
+
+      );
 
     }
 
@@ -137,28 +127,20 @@ qr.start(
   .then(d=>{
 
     // ======================================
-    // ELEMENTOS HTML
+    // HTML
     // ======================================
 
     const nombreHTML =
-    document.getElementById(
-      "nombre"
-    );
+    document.getElementById("nombre");
 
     const mensajeHTML =
-    document.getElementById(
-      "mensaje"
-    );
+    document.getElementById("mensaje");
 
     const estadoHTML =
-    document.getElementById(
-      "estado"
-    );
+    document.getElementById("estado");
 
     const fotoHTML =
-    document.getElementById(
-      "foto"
-    );
+    document.getElementById("foto");
 
     // ======================================
     // DATOS
@@ -177,7 +159,7 @@ qr.start(
     d.estado || "";
 
     // ======================================
-    // COLORES ESTADO
+    // COLORES
     // ======================================
 
     switch(d.estado){
@@ -243,7 +225,7 @@ qr.start(
     }
 
     // ======================================
-    // DESBLOQUEO
+    // DESBLOQUEAR
     // ======================================
 
     setTimeout(()=>{
@@ -259,7 +241,9 @@ qr.start(
     console.error(err);
 
     document.getElementById(
+
       "mensaje"
+
     ).innerHTML =
 
     "❌ Error conexión";
