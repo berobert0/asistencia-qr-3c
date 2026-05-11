@@ -14,105 +14,119 @@ function beep(){
 
  const audio = new Audio(
  "https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
-    );
+ );
 
-  }
+ audio.play();
 
-});
+}
 
-const qr =
-new Html5Qrcode("reader");
 
+/****************************************
+ ESCANER
+****************************************/
 qr.start(
 
-{ facingMode:"environment" },
+ { facingMode:"environment" },
 
-{ fps:10, qrbox:220 },
+ {
+   fps:10,
+   qrbox:220
+ },
 
-(texto)=>{
+ (texto) => {
 
-  if(bloqueado) return;
+   if(bloqueado) return;
 
-  bloqueado=true;
+   bloqueado = true;
 
-  if(sonido){
+   beep();
 
-    sonido.currentTime=0;
+   if(navigator.vibrate){
 
-    sonido.play().catch(()=>{});
+     navigator.vibrate(200);
 
-  }
+   }
 
-  if(navigator.vibrate){
-
-    navigator.vibrate(200);
-
-  }
-
-  fetch(
-    API+
-    "?codigo="+
+   fetch(
+    API +
+    "?codigo=" +
     encodeURIComponent(texto)
-  )
+   )
 
-  .then(r=>r.json())
+   .then(r => r.json())
 
-  .then(d=>{
+   .then(d => {
 
-    nombre.innerHTML =
-    d.nombre || "";
+      document.getElementById("nombre")
+      .innerHTML = d.nombre || "";
 
-    mensaje.innerHTML =
-    d.mensaje || "";
+      document.getElementById("estado")
+      .innerHTML = d.estado || "";
 
-    estado.innerHTML =
-    d.estado || "";
+      document.getElementById("mensaje")
+      .innerHTML = d.mensaje || "";
 
-    if(d.estado==="ASISTENCIA"){
-      estado.style.color="#22c55e";
-    }
+      /********************************
+       COLORES
+      ********************************/
+      const estado =
+      document.getElementById("estado");
 
-    else if(d.estado==="TARDANZA"){
-      estado.style.color="#facc15";
-    }
+      if(d.estado=="ASISTENCIA"){
 
-    else if(d.estado==="FALTA"){
-      estado.style.color="#ef4444";
-    }
+        estado.style.color="#22c55e";
 
-    else if(d.estado==="DUPLICADO"){
-      estado.style.color="#f97316";
-    }
+      }else if(d.estado=="TARDANZA"){
 
-    if(d.foto){
+        estado.style.color="#eab308";
 
-      foto.src=d.foto;
+      }else if(d.estado=="FALTA"){
 
-      foto.style.display="block";
+        estado.style.color="#ef4444";
 
-    }else{
+      }else if(d.estado=="DUPLICADO"){
 
-      foto.style.display="none";
+        estado.style.color="#f97316";
 
-    }
+      }
 
-    setTimeout(()=>{
+      /********************************
+       FOTO
+      ********************************/
+      let foto =
+      document.getElementById("foto");
 
-      bloqueado=false;
+      if(d.foto){
 
-    },3000);
+        foto.src = d.foto;
 
-  })
+        foto.style.display = "block";
 
-  .catch(err=>{
+      }else{
 
-    console.log(err);
+        foto.style.display = "none";
 
-    mensaje.innerHTML =
-    "Error conexión";
+      }
 
-    bloqueado=false;
+      /********************************
+       DESBLOQUEAR
+      ********************************/
+      setTimeout(() => {
 
-  });
+        bloqueado = false;
 
-});
+      },3000);
+
+   })
+
+   .catch(err => {
+
+      console.log(err);
+
+      bloqueado = false;
+
+   });
+
+ }
+
+);
