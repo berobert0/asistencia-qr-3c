@@ -1,52 +1,25 @@
-const API =
-"https://script.google.com/macros/s/AKfycbyPbslr15y2s-jxxh5xUJ1PPw2ruyMp0pwI8sT8XXH8-dCTIn6_elkWc8Mla1tS7Lg/exec";
+const API="https://script.google.com/macros/s/AKfycbyPbslr15y2s-jxxh5xUJ1PPw2ruyMp0pwI8sT8XXH8-dCTIn6_elkWc8Mla1tS7Lg/exec";
 
-let bloqueado = false;
+let bloqueado=false;
 
+let sonido;
 
-// ======================================
-// SONIDOS
-// ======================================
-
-let sonidoAsistencia;
-let sonidoTardanza;
-let sonidoFalta;
-let sonidoDuplicado;
-
-
-// ======================================
-// ACTIVAR SONIDOS
-// ======================================
-
+// SONIDO
 document.body.addEventListener("click", ()=>{
 
-  if(!sonidoAsistencia){
+  if(!sonido){
 
-    sonidoAsistencia = new Audio(
-      "https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"
-    );
+    sonido = new Audio(
 
-    sonidoTardanza = new Audio(
-      "https://actions.google.com/sounds/v1/alarms/beep_short.ogg"
-    );
+      "https://drive.google.com/uc?export=download&id=1ech4VhO76WcQtg_yJH8zU-PIUCbQSqiv"
 
-    sonidoFalta = new Audio(
-      "https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg"
-    );
-
-    sonidoDuplicado = new Audio(
-      "https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg"
     );
 
   }
 
-},{ once:true });
+});
 
-
-// ======================================
-// VALIDAR HORARIO
-// ======================================
-
+// HORARIO
 function obtenerEstadoPorHora(){
 
   let ahora = new Date();
@@ -54,12 +27,13 @@ function obtenerEstadoPorHora(){
   let horas = ahora.getHours();
   let minutos = ahora.getMinutes();
 
-  let horaActual = horas * 60 + minutos;
+  let horaActual =
+  horas * 60 + minutos;
 
-  const inicio     = 7 * 60 + 40;
-  const asistencia = 7 * 60 + 59;
-  const tardanza   = 8 * 60 + 30;
-  const salida     = 12 * 60 + 40;
+  const inicio = 460;
+  const asistencia = 480;
+  const tardanza = 540;
+  const salida = 760;
 
   if(horaActual < inicio){
 
@@ -89,40 +63,15 @@ function obtenerEstadoPorHora(){
 
 }
 
-
-// ======================================
-// VOZ
-// ======================================
-
-function hablar(texto){
-
-  if(!window.speechSynthesis) return;
-
-  let voz =
-  new SpeechSynthesisUtterance(texto);
-
-  voz.lang = "es-ES";
-
-  speechSynthesis.speak(voz);
-
-}
-
-
-// ======================================
-// ESCANER QR
-// ======================================
-
+// ESCANER
 const qr =
 new Html5Qrcode("reader");
 
 qr.start(
 
-  { facingMode:"environment" },
+{ facingMode:"environment" },
 
-  {
-    fps:10,
-    qrbox:220
-  },
+{ fps:10, qrbox:220 },
 
 (texto)=>{
 
@@ -130,8 +79,16 @@ qr.start(
 
   bloqueado = true;
 
-  // VIBRACION
+  // SONIDO
+  if(sonido){
 
+    sonido.currentTime = 0;
+
+    sonido.play().catch(()=>{});
+
+  }
+
+  // VIBRACION
   if(navigator.vibrate){
 
     navigator.vibrate(200);
@@ -139,22 +96,20 @@ qr.start(
   }
 
   // API
-
   fetch(
+
     API +
+
     "?codigo=" +
+
     encodeURIComponent(texto)
+
   )
 
   .then(r=>{
 
-    if(!r.ok){
-
-      throw new Error(
-        "Error servidor"
-      );
-
-    }
+    if(!r.ok)
+    throw new Error("Servidor");
 
     return r.json();
 
@@ -162,37 +117,25 @@ qr.start(
 
   .then(d=>{
 
-    const nombreHTML =
-    document.getElementById("nombre");
+    document.getElementById(
+      "nombre"
+    ).innerHTML =
 
-    const mensajeHTML =
-    document.getElementById("mensaje");
-
-    const estadoHTML =
-    document.getElementById("estado");
-
-    const fotoHTML =
-    document.getElementById("foto");
-
-    // DATOS
-
-    nombreHTML.innerHTML =
     d.nombre || "SIN NOMBRE";
 
-    mensajeHTML.innerHTML =
+    document.getElementById(
+      "mensaje"
+    ).innerHTML =
+
     d.mensaje || "";
 
-    // ESTADO
-
-    let estadoHora =
-    obtenerEstadoPorHora();
+    let estadoHTML =
+    document.getElementById(
+      "estado"
+    );
 
     let estadoFinal =
-    d.estado === "DUPLICADO"
-    ? "DUPLICADO"
-    : estadoHora;
-
-    // SWITCH
+    d.estado;
 
     switch(estadoFinal){
 
@@ -204,18 +147,7 @@ qr.start(
         estadoHTML.style.color =
         "#22c55e";
 
-        document.body.style.background =
-        "#052e16";
-
-        sonidoAsistencia?.play();
-
-        hablar(
-          "Bienvenido " +
-          d.nombre
-        );
-
       break;
-
 
       case "TARDANZA":
 
@@ -225,13 +157,7 @@ qr.start(
         estadoHTML.style.color =
         "#facc15";
 
-        document.body.style.background =
-        "#3f2f00";
-
-        sonidoTardanza?.play();
-
       break;
-
 
       case "FALTA":
 
@@ -241,13 +167,7 @@ qr.start(
         estadoHTML.style.color =
         "#ef4444";
 
-        document.body.style.background =
-        "#450a0a";
-
-        sonidoFalta?.play();
-
       break;
-
 
       case "DUPLICADO":
 
@@ -257,18 +177,12 @@ qr.start(
         estadoHTML.style.color =
         "#f97316";
 
-        document.body.style.background =
-        "#431407";
-
-        sonidoDuplicado?.play();
-
       break;
-
 
       default:
 
         estadoHTML.innerHTML =
-        "⏰ FUERA DE HORARIO";
+        "⏰ " + estadoFinal;
 
         estadoHTML.style.color =
         "#9ca3af";
@@ -276,52 +190,32 @@ qr.start(
     }
 
     // FOTO
+    let foto =
+    document.getElementById(
+      "foto"
+    );
 
-    if(d.foto){
+    if(
 
-      let urlFoto =
-      d.foto;
+      d.foto &&
 
-      if(
-        urlFoto.includes(
-          "drive.google.com"
-        )
-      ){
+      d.foto.startsWith("http")
 
-        let match =
-        urlFoto.match(
-          /\/d\/(.*?)\//
-        );
+    ){
 
-        if(match && match[1]){
+      foto.src = d.foto;
 
-          urlFoto =
-          "https://drive.google.com/uc?export=view&id=" +
-          match[1];
-
-        }
-
-      }
-
-      fotoHTML.src =
-      urlFoto;
-
-      fotoHTML.style.display =
+      foto.style.display =
       "block";
 
     }else{
 
-      fotoHTML.style.display =
+      foto.style.display =
       "none";
 
     }
 
-    // RESET
-
     setTimeout(()=>{
-
-      document.body.style.background =
-      "#111827";
 
       bloqueado = false;
 
@@ -331,12 +225,13 @@ qr.start(
 
   .catch(err=>{
 
-    console.log(err);
+    console.error(err);
 
     document.getElementById(
       "mensaje"
     ).innerHTML =
-    "❌ ERROR";
+
+    "❌ Error conexión";
 
     bloqueado = false;
 
