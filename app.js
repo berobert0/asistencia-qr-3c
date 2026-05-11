@@ -1,23 +1,74 @@
 const API =
 "https://script.google.com/macros/s/AKfycbxivZO64l9vCuvubiFDj01Y4fIgIkRzbsKRxyXxp8Lo-qy7V_pXOIiDvx2Hi7x9QHAQ/exec";
 
-let bloqueado=false;
+// ======================================
+// VARIABLES
+// ======================================
 
-let sonido;
+let bloqueado = false;
+
+let sonidoQR = null;
+
+// ======================================
+// ACTIVAR SONIDO
+// ======================================
 
 document.body.addEventListener("click", ()=>{
 
-  if(!sonido){
+  // Android requiere interacción del usuario
+  if(!sonidoQR){
 
-    sonido = new Audio(
+    sonidoQR = new Audio(
 
-      "https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"
+      "https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
 
     );
 
+    sonidoQR.volume = 1;
+
+    console.log("🔊 Sonido QR activado");
+
   }
 
-});
+},{ once:true });
+
+
+// ======================================
+// REPRODUCIR SONIDO
+// ======================================
+
+function reproducirSonido(){
+
+  if(!sonidoQR) return;
+
+  sonidoQR.currentTime = 0;
+
+  sonidoQR.play()
+
+  .then(()=>{
+
+    console.log("✅ Sonido reproducido");
+
+  })
+
+  .catch(error=>{
+
+    console.log(
+
+      "❌ Error sonido:",
+
+      error
+
+    );
+
+  });
+
+}
+
+
+// ======================================
+// ESCANER QR
+// ======================================
 
 const qr =
 new Html5Qrcode("reader");
@@ -26,29 +77,40 @@ qr.start(
 
 { facingMode:"environment" },
 
-{ fps:10, qrbox:220 },
+{
+  fps:10,
+  qrbox:220
+},
 
 (texto)=>{
 
+  // ======================================
+  // BLOQUEO
+  // ======================================
+
   if(bloqueado) return;
 
-  bloqueado=true;
+  bloqueado = true;
 
+  // ======================================
   // SONIDO
-  if(sonido){
+  // ======================================
 
-    sonido.currentTime=0;
+  reproducirSonido();
 
-    sonido.play().catch(()=>{});
-
-  }
-
+  // ======================================
   // VIBRACION
+  // ======================================
+
   if(navigator.vibrate){
 
     navigator.vibrate(200);
 
   }
+
+  // ======================================
+  // CONSULTA API
+  // ======================================
 
   fetch(
 
@@ -60,72 +122,104 @@ qr.start(
 
   )
 
-  .then(r=>r.json())
+  .then(r=>{
+
+    if(!r.ok){
+
+      throw new Error("Error servidor");
+
+    }
+
+    return r.json();
+
+  })
 
   .then(d=>{
 
+    // ======================================
+    // ELEMENTOS HTML
+    // ======================================
+
+    const nombreHTML =
     document.getElementById(
       "nombre"
-    ).innerHTML =
+    );
 
-    d.nombre || "";
-
+    const mensajeHTML =
     document.getElementById(
       "mensaje"
-    ).innerHTML =
+    );
 
-    d.mensaje || "";
-
-    let estado =
+    const estadoHTML =
     document.getElementById(
       "estado"
     );
 
-    estado.innerHTML =
+    const fotoHTML =
+    document.getElementById(
+      "foto"
+    );
+
+    // ======================================
+    // DATOS
+    // ======================================
+
+    nombreHTML.innerHTML =
+
+    d.nombre || "SIN NOMBRE";
+
+    mensajeHTML.innerHTML =
+
+    d.mensaje || "";
+
+    estadoHTML.innerHTML =
+
     d.estado || "";
+
+    // ======================================
+    // COLORES ESTADO
+    // ======================================
 
     switch(d.estado){
 
       case "ASISTENCIA":
 
-        estado.style.color =
+        estadoHTML.style.color =
         "#22c55e";
 
       break;
 
       case "TARDANZA":
 
-        estado.style.color =
+        estadoHTML.style.color =
         "#facc15";
 
       break;
 
       case "FALTA":
 
-        estado.style.color =
+        estadoHTML.style.color =
         "#ef4444";
 
       break;
 
       case "DUPLICADO":
 
-        estado.style.color =
+        estadoHTML.style.color =
         "#f97316";
 
       break;
 
       default:
 
-        estado.style.color =
+        estadoHTML.style.color =
         "#9ca3af";
 
     }
 
+    // ======================================
     // FOTO
-    let foto =
-    document.getElementById(
-      "foto"
-    );
+    // ======================================
 
     if(
 
@@ -134,21 +228,27 @@ qr.start(
 
     ){
 
-      foto.src = d.foto;
+      fotoHTML.src = d.foto;
 
-      foto.style.display =
+      fotoHTML.style.display =
       "block";
 
-    }else{
+    }
 
-      foto.style.display =
+    else{
+
+      fotoHTML.style.display =
       "none";
 
     }
 
+    // ======================================
+    // DESBLOQUEO
+    // ======================================
+
     setTimeout(()=>{
 
-      bloqueado=false;
+      bloqueado = false;
 
     },3000);
 
@@ -158,9 +258,16 @@ qr.start(
 
     console.error(err);
 
-    bloqueado=false;
+    document.getElementById(
+      "mensaje"
+    ).innerHTML =
+
+    "❌ Error conexión";
+
+    bloqueado = false;
 
   });
 
 }
+
 );
