@@ -1,36 +1,75 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Asistencia QR</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Scanner QR</title>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 
-<link rel="stylesheet" href="style.css">
+<style>
+
+body{
+  background:#111827;
+  color:white;
+  font-family:Arial;
+  text-align:center;
+  margin:0;
+  padding:20px;
+}
+
+#reader{
+  width:320px;
+  margin:auto;
+}
+
+#foto{
+  width:140px;
+  height:140px;
+  border-radius:50%;
+  object-fit:cover;
+  margin-top:15px;
+  display:none;
+  border:4px solid white;
+}
+
+#nombre{
+  font-size:26px;
+  font-weight:bold;
+  margin-top:15px;
+}
+
+#estado{
+  font-size:30px;
+  font-weight:bold;
+  margin-top:10px;
+}
+
+#mensaje{
+  font-size:20px;
+  margin-top:10px;
+}
+
+</style>
+
 </head>
 
 <body>
 
-<div class="header">
-<h2>I.E. 5074 Alcides Spelucín Vega</h2>
-<p>3C Nivel Primaria</p>
-<p>Control de Asistencia</p>
-</div>
+<h1>📷 CONTROL QR</h1>
 
 <div id="reader"></div>
 
-<div class="panel">
+<img id="foto">
 
-<img id="foto" class="foto">
+<div id="nombre"></div>
 
-<div id="nombre" class="nombre"></div>
+<div id="estado"></div>
 
-<div id="estado" class="estado"></div>
-
-<div id="mensaje" class="mensaje"></div>
-
-</div>
+<div id="mensaje"></div>
 
 <script src="app.js"></script>
 
