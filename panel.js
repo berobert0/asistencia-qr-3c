@@ -1,38 +1,33 @@
-const API =
-"https://script.google.com/macros/s/AKfycbwb_k8JvvmzldaPk-D-8uHPg7craueCyK-pcM61Vy2s46slSvA3LzWr8yh-vldJK0gq/exec";
+const API="https://script.google.com/macros/s/AKfycbz5RfBkeCIPa5zcayzbtpe3YYuzAmoCAzep-7q1VH_MO4AMt1OUz3aQ5sjeKkDaq_uf/exec";
 
-let chart;
+let chartBar;
+let chartPie;
 
-
-/****************************************
- LOGIN
-****************************************/
 function login(){
 
-  const usuario =
-  document.getElementById("user").value;
-
-  const clave =
-  document.getElementById("pass").value;
-
   fetch(
-    API +
-    "?tipo=login" +
-    "&user=" + encodeURIComponent(usuario) +
-    "&pass=" + encodeURIComponent(clave)
+
+    API+
+
+    "?tipo=login"+
+
+    "&user="+
+    encodeURIComponent(user.value)+
+
+    "&pass="+
+    encodeURIComponent(pass.value)
+
   )
 
-  .then(r => r.json())
+  .then(r=>r.json())
 
-  .then(d => {
+  .then(d=>{
 
     if(d.ok){
 
-      document.getElementById("login")
-      .style.display = "none";
+      login.style.display="none";
 
-      document.getElementById("panel")
-      .style.display = "block";
+      panel.style.display="block";
 
       cargar();
 
@@ -42,143 +37,125 @@ function login(){
 
     }
 
-  })
-
-  .catch(err => {
-
-    console.log(err);
-
-    alert("Error conexión");
-
   });
 
 }
 
 
-/****************************************
- CARGAR PANEL
-****************************************/
 function cargar(){
 
-fetch(API + "?tipo=panel")
+fetch(API+"?tipo=panel")
 
-.then(r => r.json())
+.then(r=>r.json())
 
-.then(data => {
+.then(data=>{
 
-let a=0;
-let t=0;
-let f=0;
+let resumen={
+ASISTENCIA:0,
+TARDANZA:0,
+FALTA:0
+};
 
 let html="";
 
-data.reverse().forEach(x => {
+data.reverse().forEach(d=>{
 
- if(x.estado=="ASISTENCIA") a++;
- if(x.estado=="TARDANZA") t++;
- if(x.estado=="FALTA") f++;
+if(resumen[d.estado]!=null){
 
- html += `
- <tr>
-   <td>${x.nombre}</td>
-   <td>${x.hora}</td>
-   <td>${x.estado}</td>
- </tr>
- `;
-
-});
-
-document.getElementById("tabla").innerHTML = html;
-
-document.getElementById("asis").innerHTML = a;
-document.getElementById("tard").innerHTML = t;
-document.getElementById("falt").innerHTML = f;
-
-
-/****************************************
- GRAFICO
-****************************************/
-if(chart){
-
- chart.destroy();
+ resumen[d.estado]++;
 
 }
 
-chart = new Chart(
+html+=`
 
-document.getElementById("grafico"),
+<tr>
+
+<td>${d.nombre}</td>
+
+<td>${d.grado}</td>
+
+<td>${d.seccion}</td>
+
+<td>${d.hora}</td>
+
+<td>${d.estado}</td>
+
+</tr>
+
+`;
+
+});
+
+tabla.innerHTML=html;
+
+asis.innerHTML=
+resumen.ASISTENCIA;
+
+tard.innerHTML=
+resumen.TARDANZA;
+
+falt.innerHTML=
+resumen.FALTA;
+
+graficos(resumen);
+
+});
+
+}
+
+
+function graficos(r){
+
+const data=[
+r.ASISTENCIA,
+r.TARDANZA,
+r.FALTA
+];
+
+if(chartBar) chartBar.destroy();
+if(chartPie) chartPie.destroy();
+
+chartBar=new Chart(
+
+document.getElementById("graficoBarras"),
 
 {
- type:"bar",
-
- data:{
-
-  labels:[
-   "Asistencia",
-   "Tardanza",
-   "Falta"
-  ],
-
-  datasets:[{
-
-   data:[a,t,f]
-
-  }]
-
- }
-
+type:'bar',
+data:{
+labels:[
+'Asistencia',
+'Tardanza',
+'Falta'
+],
+datasets:[{data:data}]
+}
 });
 
-})
+chartPie=new Chart(
 
-.catch(err => {
+document.getElementById("graficoPastel"),
 
- console.log(err);
-
+{
+type:'pie',
+data:{
+labels:[
+'Asistencia',
+'Tardanza',
+'Falta'
+],
+datasets:[{data:data}]
+}
 });
 
 }
 
 
-/****************************************
- EXPORTAR EXCEL
-****************************************/
-function exportar(){
+setInterval(()=>{
 
-let tablaHTML =
-document.querySelector("table").outerHTML;
+if(panel.style.display==="block"){
 
-let blob = new Blob(
-
- [tablaHTML],
-
- {type:"application/vnd.ms-excel"}
-
-);
-
-let a = document.createElement("a");
-
-a.href = URL.createObjectURL(blob);
-
-a.download = "reporte.xls";
-
-a.click();
+ cargar();
 
 }
-
-
-/****************************************
- ACTUALIZAR AUTOMÁTICO
-****************************************/
-setInterval(() => {
-
- if(
-  document.getElementById("panel")
-  .style.display == "block"
- ){
-
-   cargar();
-
- }
 
 },5000);
